@@ -1,0 +1,70 @@
+resources:
+  - name: Git_int
+    type: GitRepo
+    configuration:
+      gitProvider: webappgit                       # <-- replace wth your 
+      path: liavgu/Multi_threaded_online_brute_force_template    # <-- replace with your repository name
+      branches:
+        include: master
+
+  - name: new_docker_image
+    type: Image
+    configuration:
+      registry: MyArtifactory                                # <-- replace with your     MyArtifactoryifactory integration
+      sourceRepository: prod-repo               # <-- required if registry is     MyArtifactoryifactory
+      imageName: liavacademy.jfrogdev.org/prod-repo/webinfra # < -- replace with your image path and name
+      imageTag: ${run_number}
+      autoPull: true
+
+  - name: py_app_buildinfo
+    type: BuildInfo
+    configuration:
+      sourceArtifactory: MyArtifactory
+
+  - name: py_app_promoted_buildinfo
+    type: BuildInfo
+    configuration:
+      sourceArtifactory: MyArtifactory 
+
+pipelines:
+  - name: pipeline_build_and_push_liav
+    steps:
+      - name: docker_build
+        type: DockerBuild
+        configuration:
+          affinityGroup: dbp_group
+          dockerFileLocation: .
+          dockerFileName: Dockerfile
+          dockerImageName: liavacademy.jfrogdev.org/prod-repo/webinfra  # replace with your image path and name
+          dockerImageTag: ${run_number}
+          inputResources:
+            - name: Git_int
+          integrations:
+            - name: MyArtifactory                            # <-- replace with your     MyArtifactoryifactory integration
+
+      - name: docker_push
+        type: DockerPush
+        configuration:
+          affinityGroup: dbp_group
+          targetRepository: liav-local-repo
+          integrations:
+            - name: MyArtifactory                            # <-- new test replace with your     MyArtifactoryifactory integration
+          inputSteps:
+            - name: docker_build
+          outputResources:
+            - name: new_docker_image
+
+      - name: publish_app_build
+        type: PublishBuildInfo
+        configuration:
+          affinityGroup: dbp_group
+          inputSteps:
+            - name: docker_push
+          outputResources:
+            - name: py_app_buildinfo
+
+      - name: xrayScanStep
+        type: XrayScan
+        configuration:
+          inputResources:
+            - name: py_app_buildinfo
