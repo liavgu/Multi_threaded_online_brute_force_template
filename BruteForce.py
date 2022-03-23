@@ -23,7 +23,7 @@ def Banner():
                                                               
 
     """
-    print(f"{banner}\n\t created by PT-Mastermind\n")
+    print(f"{banner}\n\t created by PT-Mastermind \n")
     print("___________________________________________")
 
 
