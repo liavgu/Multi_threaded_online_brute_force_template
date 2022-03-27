@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM liavgoldadev.jfrogdev.org/ubuntu:18.04
 ADD . /
 
 RUN apt update
